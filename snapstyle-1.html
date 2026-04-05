@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>SnapStyle</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --snap-yellow: #FFFC00;
+    --snap-black: #0A0A0A;
+    --snap-dark: #111111;
+    --snap-card: #1A1A1A;
+    --snap-border: #2A2A2A;
+    --snap-text: #F5F5F5;
+    --snap-muted: #888;
+    --snap-accent: #FF6B35;
+    --snap-blue: #4CC9F0;
+    --snap-pink: #FF006E;
+    --snap-green: #06FFA5;
+    --radius: 20px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--snap-black);
+    color: var(--snap-text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── SPLASH SCREEN ─── */
+  #splash {
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--snap-black);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px;
+    animation: splashOut 0.5s ease 2.2s forwards;
+  }
+  .splash-logo {
+    width: 90px; height: 90px;
+    background: var(--snap-yellow);
+    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px;
+    color: var(--snap-black);
+    animation: logoPop 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;
+  }
+  .splash-name {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 38px;
+    letter-spacing: -1px;
+    animation: fadeUp 0.5s ease 0.7s both;
+  }
+  .splash-name span { color: var(--snap-yellow); }
+  .splash-sub {
+    color: var(--snap-muted); font-size: 14px; letter-spacing: 2px; text-transform: uppercase;
+    animation: fadeUp 0.5s ease 0.9s both;
+  }
+  .splash-dots {
+    display: flex; gap: 8px; margin-top: 20px;
+    animation: fadeUp 0.5s ease 1.1s both;
+  }
+  .splash-dots span {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--snap-yellow); opacity: 0.3;
+    animation: dotPulse 1s ease infinite;
+  }
+  .splash-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .splash-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+  @keyframes logoPop { from { transform: scale(0) rotate(-20deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+  @keyframes fadeUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  @keyframes dotPulse { 0%,100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.3); } }
+  @keyframes splashOut { to { opacity: 0; pointer-events: none; transform: scale(1.05); } }
+
+  /* ─── AUTH SCREEN ─── */
+  #auth-screen {
+    display: none; position: fixed; inset: 0; z-index: 100;
+    background: var(--snap-black);
+    flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  #auth-screen.active { display: flex; }
+
+  .auth-logo {
+    width: 60px; height: 60px;
+    background: var(--snap-yellow);
+    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px;
+    color: var(--snap-black); margin-bottom: 12px;
+  }
+  .auth-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; margin-bottom: 6px; }
+  .auth-subtitle { color: var(--snap-muted); font-size: 14px; margin-bottom: 36px; }
+
+  .auth-tabs {
+    display: flex; background: var(--snap-card); border-radius: 14px; padding: 4px;
+    margin-bottom: 28px; width: 100%; max-width: 340px;
+  }
+  .auth-tab {
+    flex: 1; padding: 10px; border-radius: 10px; border: none; background: transparent;
+    color: var(--snap-muted); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .auth-tab.active { background: var(--snap-yellow); color: var(--snap-black); font-weight: 700; }
+
+  .auth-form { width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 14px; }
+  .auth-input {
+    background: var(--snap-card); border: 1.5px solid var(--snap-border); border-radius: 14px;
+    padding: 14px 18px; color: var(--snap-text); font-family: 'DM Sans', sans-serif; font-size: 15px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .auth-input:focus { border-color: var(--snap-yellow); }
+  .auth-input::placeholder { color: var(--snap-muted); }
+
+  .btn-primary {
+    background: var(--snap-yellow); color: var(--snap-black); border: none; border-radius: 14px;
+    padding: 15px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px;
+    cursor: pointer; transition: transform 0.15s, opacity 0.15s; margin-top: 4px;
+  }
+  .btn-primary:active { transform: scale(0.97); opacity: 0.9; }
+
+  /* ─── MAIN APP ─── */
+  #app { display: none; flex-direction: column; min-height: 100vh; }
+  #app.active { display: flex; }
+
+  /* ─── TOP NAV ─── */
+  .top-nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(20px);
+    padding: 14px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--snap-border);
+  }
+  .nav-logo {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px;
+  }
+  .nav-logo-icon {
+    width: 34px; height: 34px;
+    background: var(--snap-yellow);
+    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: var(--snap-black); font-weight: 800;
+  }
+  .nav-logo span { color: var(--snap-yellow); }
+  .nav-actions { display: flex; gap: 12px; align-items: center; }
+  .nav-btn {
+    width: 38px; height: 38px; border-radius: 50%; background: var(--snap-card);
+    border: 1px solid var(--snap-border); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 18px; transition: background 0.2s, transform 0.15s;
+    position: relative;
+  }
+  .nav-btn:active { transform: scale(0.92); }
+  .notif-badge {
+    position: absolute; top: -2px; right: -2px; width: 16px; height: 16px;
+    background: var(--snap-pink); border-radius: 50%; font-size: 9px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; color: white;
+  }
+
+  /* ─── STORY ROW ─── */
+  .story-section { padding: 16px 0 8px; }
+  .story-section-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--snap-muted); padding: 0 20px 12px; }
+  .story-scroll {
+    display: flex; gap: 12px; overflow-x: auto; padding: 0 20px 8px;
+    scrollbar-width: none;
+  }
+  .story-scroll::-webkit-scrollbar { display: none; }
+  .story-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; flex-shrink: 0; }
+  .story-ring {
+    width: 64px; height: 64px; border-radius: 50%;
+    padding: 2.5px;
+    background: conic-gradient(var(--snap-yellow), var(--snap-pink), var(--snap-blue), var(--snap-yellow));
+    transition: transform 0.2s;
+  }
+  .story-ring:active { transform: scale(0.92); }
+  .story-ring.seen { background: var(--snap-border); }
+  .story-avatar {
+    width: 100%; height: 100%; border-radius: 50%;
+    background: var(--snap-card); display: flex; align-items: center; justify-content: center;
+    font-size: 22px; border: 2.5px solid var(--snap-black);
+    overflow: hidden;
+  }
+  .story-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .story-name { font-size: 11px; color: var(--snap-muted); max-width: 64px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .add-story .story-ring { background: var(--snap-card); border: 2px dashed var(--snap-yellow); padding: 0; }
+  .add-story .story-avatar { border: none; }
+
+  /* ─── FEED ─── */
+  .feed { flex: 1; padding: 8px 16px 100px; display: flex; flex-direction: column; gap: 14px; }
+
+  /* ─── SNAP CARD ─── */
+  .snap-card {
+    background: var(--snap-card); border-radius: var(--radius); overflow: hidden;
+    border: 1px solid var(--snap-border);
+    animation: cardIn 0.4s ease both;
+    transition: transform 0.2s;
+  }
+  .snap-card:active { transform: scale(0.99); }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+  .card-header { display: flex; align-items: center; gap: 10px; padding: 14px 14px 0; }
+  .card-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--snap-border); display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0; overflow: hidden;
+  }
+  .card-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .card-user { flex: 1; }
+  .card-username { font-weight: 600; font-size: 14px; }
+  .card-time { font-size: 12px; color: var(--snap-muted); }
+  .card-menu { font-size: 20px; color: var(--snap-muted); cursor: pointer; padding: 4px; }
+
+  .card-snap {
+    margin: 12px 0 0;
+    width: 100%; aspect-ratio: 4/5;
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    position: relative; overflow: hidden; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card-snap-emoji { font-size: 80px; filter: drop-shadow(0 0 30px rgba(255,252,0,0.3)); }
+  .card-snap-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%);
+    display: flex; align-items: flex-end; padding: 16px;
+  }
+  .card-snap-text { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; line-height: 1.2; }
+  .card-snap-text span { color: var(--snap-yellow); }
+
+  .snap-timer {
+    position: absolute; top: 12px; right: 12px;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
+    border-radius: 20px; padding: 4px 10px;
+    font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 4px;
+  }
+
+  .card-actions { display: flex; padding: 12px 14px; gap: 16px; align-items: center; }
+  .card-action-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: none; border: none; color: var(--snap-text); cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    transition: color 0.2s, transform 0.15s;
+    padding: 4px;
+  }
+  .card-action-btn:active { transform: scale(0.88); }
+  .card-action-btn.liked { color: var(--snap-pink); }
+  .card-action-btn .icon { font-size: 20px; }
+  .action-count { font-weight: 500; }
+  .card-share { margin-left: auto; }
+
+  .card-caption { padding: 0 14px 14px; font-size: 14px; line-height: 1.5; color: #ddd; }
+  .card-caption strong { color: var(--snap-text); font-weight: 600; }
+  .card-caption .hashtag { color: var(--snap-yellow); }
+
+  /* ─── GRADIENT SNAPS ─── */
+  .grad-1 { background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 50%, #533483 100%); }
+  .grad-2 { background: linear-gradient(135deg, #0d0d0d 0%, #1a0020 50%, #330033 100%); }
+  .grad-3 { background: linear-gradient(135deg, #001a1a 0%, #003333 50%, #004d40 100%); }
+  .grad-4 { background: linear-gradient(135deg, #1a0a00 0%, #3d1a00 50%, #7a3300 100%); }
+  .grad-5 { background: linear-gradient(135deg, #0a001a 0%, #1a0033 50%, #330066 100%); }
+
+  /* ─── BOTTOM NAV ─── */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+    background: rgba(10,10,10,0.92); backdrop-filter: blur(20px);
+    border-top: 1px solid var(--snap-border);
+    display: flex; padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+  }
+  .bottom-nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    cursor: pointer; padding: 6px 0;
+    transition: transform 0.15s;
+  }
+  .bottom-nav-item:active { transform: scale(0.88); }
+  .bottom-nav-icon { font-size: 24px; transition: filter 0.2s; }
+  .bottom-nav-label { font-size: 10px; color: var(--snap-muted); font-weight: 500; transition: color 0.2s; }
+  .bottom-nav-item.active .bottom-nav-icon { filter: drop-shadow(0 0 8px var(--snap-yellow)); }
+  .bottom-nav-item.active .bottom-nav-label { color: var(--snap-yellow); }
+
+  .snap-fab {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .snap-fab-btn {
+    width: 52px; height: 52px; border-radius: 16px;
+    background: var(--snap-yellow); display: flex; align-items: center; justify-content: center;
+    font-size: 26px; color: var(--snap-black);
+    box-shadow: 0 4px 20px rgba(255,252,0,0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+    margin-bottom: 2px;
+  }
+  .snap-fab:active .snap-fab-btn { transform: scale(0.9); box-shadow: 0 2px 10px rgba(255,252,0,0.2); }
+
+  /* ─── CAMERA OVERLAY ─── */
+  #camera-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: #000; flex-direction: column; align-items: center; justify-content: center;
+  }
+  #camera-overlay.active { display: flex; }
+  .camera-preview {
+    width: 100%; flex: 1;
+    background: linear-gradient(135deg, #0a0a1a, #1a0a2e, #2a1a0a);
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .camera-subject { font-size: 120px; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+  .camera-filter-bar {
+    position: absolute; bottom: 16px; left: 0; right: 0;
+    display: flex; gap: 10px; padding: 0 16px; overflow-x: auto; scrollbar-width: none;
+  }
+  .filter-btn {
+    flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
+    border: 1.5px solid rgba(255,255,255,0.3); background: rgba(0,0,0,0.4);
+    color: white; font-size: 12px; cursor: pointer; backdrop-filter: blur(10px);
+    transition: all 0.2s;
+  }
+  .filter-btn.active { background: var(--snap-yellow); color: var(--snap-black); border-color: var(--snap-yellow); font-weight: 700; }
+
+  .camera-controls {
+    width: 100%; padding: 20px 24px;
+    background: #000; display: flex; align-items: center; justify-content: space-between;
+  }
+  .cam-side-btn { font-size: 28px; cursor: pointer; padding: 8px; transition: transform 0.15s; }
+  .cam-side-btn:active { transform: scale(0.85); }
+  .shutter-btn {
+    width: 76px; height: 76px; border-radius: 50%;
+    border: 4px solid white; background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: transform 0.15s;
+    position: relative;
+  }
+  .shutter-inner { width: 58px; height: 58px; border-radius: 50%; background: white; transition: transform 0.15s; }
+  .shutter-btn:active .shutter-inner { transform: scale(0.88); }
+
+  .camera-top {
+    width: 100%; padding: 16px 20px; background: transparent;
+    position: absolute; top: 0; display: flex; align-items: center; justify-content: space-between;
+    z-index: 10;
+  }
+
+  /* ─── MESSAGES PANEL ─── */
+  #messages-panel {
+    display: none; position: fixed; inset: 0; z-index: 150;
+    background: var(--snap-black); flex-direction: column;
+  }
+  #messages-panel.active { display: flex; }
+
+  .panel-header {
+    padding: 56px 20px 16px; display: flex; align-items: center; gap: 14px;
+    border-bottom: 1px solid var(--snap-border);
+    background: rgba(10,10,10,0.9); backdrop-filter: blur(20px);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .back-btn { font-size: 24px; cursor: pointer; padding: 4px; transition: transform 0.15s; }
+  .back-btn:active { transform: scale(0.88); }
+  .panel-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; }
+
+  .msg-search {
+    margin: 12px 20px 16px;
+    background: var(--snap-card); border: 1px solid var(--snap-border);
+    border-radius: 14px; padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px; color: var(--snap-muted);
+  }
+  .msg-search input {
+    background: none; border: none; outline: none;
+    color: var(--snap-text); font-family: 'DM Sans', sans-serif; font-size: 14px; flex: 1;
+  }
+  .msg-search input::placeholder { color: var(--snap-muted); }
+
+  .msg-list { flex: 1; overflow-y: auto; padding: 0 16px 80px; }
+  .msg-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    cursor: pointer; transition: background 0.15s; border-radius: 12px;
+  }
+  .msg-avatar {
+    width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 24px;
+    position: relative;
+  }
+  .msg-online { position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--snap-green); border: 2px solid var(--snap-black); }
+  .msg-info { flex: 1; min-width: 0; }
+  .msg-name { font-weight: 600; font-size: 15px; margin-bottom: 3px; }
+  .msg-preview { font-size: 13px; color: var(--snap-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .msg-preview.unread { color: var(--snap-yellow); font-weight: 600; }
+  .msg-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .msg-time { font-size: 11px; color: var(--snap-muted); }
+  .msg-badge { width: 20px; height: 20px; border-radius: 50%; background: var(--snap-yellow); color: var(--snap-black); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-20px);
+    background: var(--snap-card); border: 1px solid var(--snap-yellow);
+    color: var(--snap-text); padding: 10px 20px; border-radius: 20px;
+    font-size: 14px; font-weight: 500; z-index: 9000; opacity: 0;
+    transition: all 0.3s; white-space: nowrap; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ─── SNAP VIEWER ─── */
+  #snap-viewer {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: #000;
+  }
+  #snap-viewer.active { display: block; }
+  .snap-view-content {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px; position: relative;
+  }
+  .snap-view-emoji { font-size: 100px; animation: snapReveal 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+  @keyframes snapReveal { from { transform: scale(0.5) rotate(-10deg); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .snap-view-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 26px; text-align: center; padding: 0 30px; animation: fadeUp 0.4s ease 0.2s both; }
+  .snap-view-close {
+    position: absolute; top: 20px; right: 20px; font-size: 28px; cursor: pointer;
+    background: rgba(0,0,0,0.5); border-radius: 50%; width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .snap-timer-bar {
+    position: absolute; top: 0; left: 0; height: 4px;
+    background: var(--snap-yellow); animation: timerBar 5s linear forwards;
+  }
+  @keyframes timerBar { from { width: 0%; } to { width: 100%; } }
+
+  /* ─── PROFILE PANEL ─── */
+  #profile-panel {
+    display: none; position: fixed; inset: 0; z-index: 150;
+    background: var(--snap-black); overflow-y: auto;
+  }
+  #profile-panel.active { display: block; }
+  .profile-hero {
+    background: linear-gradient(135deg, var(--snap-black), #1a1500, var(--snap-black));
+    padding: 60px 20px 30px; text-align: center; position: relative;
+  }
+  .profile-back { position: absolute; top: 20px; left: 20px; font-size: 24px; cursor: pointer; }
+  .profile-avatar-big {
+    width: 90px; height: 90px; border-radius: 50%; background: var(--snap-card);
+    margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 40px; border: 3px solid var(--snap-yellow);
+  }
+  .profile-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 24px; }
+  .profile-handle { color: var(--snap-yellow); font-size: 14px; margin-top: 4px; }
+  .profile-bio { color: var(--snap-muted); font-size: 13px; margin-top: 8px; max-width: 280px; margin-left: auto; margin-right: auto; }
+  .profile-stats { display: flex; justify-content: center; gap: 30px; margin-top: 20px; }
+  .profile-stat { text-align: center; }
+  .profile-stat-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; }
+  .profile-stat-label { font-size: 11px; color: var(--snap-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .profile-actions { display: flex; gap: 10px; padding: 16px 20px; }
+  .btn-follow {
+    flex: 1; background: var(--snap-yellow); color: var(--snap-black); border: none;
+    border-radius: 12px; padding: 12px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .btn-follow:active { transform: scale(0.95); }
+  .btn-message {
+    flex: 1; background: var(--snap-card); color: var(--snap-text); border: 1px solid var(--snap-border);
+    border-radius: 12px; padding: 12px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; cursor: pointer;
+  }
+  .profile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 0 0 80px; }
+  .profile-grid-item {
+    aspect-ratio: 1; background: var(--snap-card);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; cursor: pointer; position: relative; overflow: hidden;
+  }
+  .profile-grid-item::after {
+    content: ''; position: absolute; inset: 0;
+    background: rgba(0,0,0,0); transition: background 0.2s;
+  }
+  .profile-grid-item:active::after { background: rgba(255,252,0,0.15); }
+
+  /* ─── DISCOVER ─── */
+  #discover-panel {
+    display: none; position: fixed; inset: 0; z-index: 150;
+    background: var(--snap-black); flex-direction: column; overflow-y: auto;
+  }
+  #discover-panel.active { display: flex; }
+  .discover-search-bar {
+    padding: 56px 20px 12px;
+    background: rgba(10,10,10,0.9); backdrop-filter: blur(20px);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .discover-search {
+    background: var(--snap-card); border: 1px solid var(--snap-border);
+    border-radius: 14px; padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .discover-search input {
+    background: none; border: none; outline: none;
+    color: var(--snap-text); font-family: 'DM Sans', sans-serif; font-size: 15px; flex: 1;
+  }
+  .discover-search input::placeholder { color: var(--snap-muted); }
+
+  .trending-tags { display: flex; gap: 8px; overflow-x: auto; padding: 12px 20px 0; scrollbar-width: none; }
+  .trending-tags::-webkit-scrollbar { display: none; }
+  .tag-chip {
+    flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
+    background: var(--snap-card); border: 1px solid var(--snap-border);
+    font-size: 13px; cursor: pointer; transition: all 0.2s;
+  }
+  .tag-chip.active { background: var(--snap-yellow); color: var(--snap-black); border-color: var(--snap-yellow); font-weight: 700; }
+
+  .discover-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 16px 16px 100px; }
+  .discover-card {
+    border-radius: 16px; overflow: hidden; cursor: pointer;
+    aspect-ratio: 3/4; position: relative;
+    display: flex; align-items: flex-end;
+    transition: transform 0.2s;
+  }
+  .discover-card:active { transform: scale(0.96); }
+  .discover-card-bg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .discover-card-emoji { font-size: 64px; }
+  .discover-card-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 60%);
+  }
+  .discover-card-info { position: relative; padding: 12px; z-index: 1; }
+  .discover-card-tag { font-size: 11px; color: var(--snap-yellow); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .discover-card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; line-height: 1.2; margin-top: 2px; }
+  .discover-card-views { font-size: 11px; color: var(--snap-muted); margin-top: 4px; }
+
+  /* ─── NOTIFICATION PANEL ─── */
+  #notif-panel {
+    display: none; position: fixed; inset: 0; z-index: 150;
+    background: var(--snap-black); flex-direction: column;
+  }
+  #notif-panel.active { display: flex; }
+  .notif-list { flex: 1; overflow-y: auto; padding: 8px 16px 80px; }
+  .notif-item {
+    display: flex; align-items: center; gap: 12px; padding: 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer;
+  }
+  .notif-item-avatar {
+    width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+  }
+  .notif-item-text { flex: 1; font-size: 14px; line-height: 1.4; }
+  .notif-item-text strong { color: var(--snap-text); }
+  .notif-item-text span { color: var(--snap-muted); }
+  .notif-item-action { font-size: 20px; }
+  .notif-item.unread { background: rgba(255,252,0,0.03); border-radius: 12px; padding: 14px 10px; }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .panel-slide { animation: slideUp 0.35s cubic-bezier(0.32,0.72,0,1); }
+
+  /* ─── HEART BURST ─── */
+  .heart-burst {
+    position: fixed; pointer-events: none; z-index: 9998;
+    font-size: 24px; animation: heartFloat 1s ease forwards;
+  }
+  @keyframes heartFloat { from { transform: translateY(0) scale(0); opacity: 1; } to { transform: translateY(-80px) scale(1.5); opacity: 0; } }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo">S</div>
+  <div class="splash-name">Snap<span>Style</span></div>
+  <div class="splash-sub">Share your world</div>
+  <div class="splash-dots"><span></span><span></span><span></span></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-logo">S</div>
+  <div class="auth-title">SnapStyle 👻</div>
+  <div class="auth-subtitle">Your world. Your style.</div>
+  <div class="auth-tabs">
+    <button class="auth-tab active" onclick="switchAuthTab('login')">Log In</button>
+    <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
+  </div>
+  <div class="auth-form" id="auth-form">
+    <input class="auth-input" type="text" id="auth-username" placeholder="Username" />
+    <input class="auth-input" type="password" placeholder="Password" />
+    <button class="btn-primary" onclick="enterApp()">Log In ⚡</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+
+  <!-- TOP NAV -->
+  <div class="top-nav">
+    <div class="nav-logo"><div class="nav-logo-icon">S</div>Snap<span>Style</span></div>
+    <div class="nav-actions">
+      <div class="nav-btn" onclick="openPanel('notif-panel')">🔔<div class="notif-badge">3</div></div>
+      <div class="nav-btn" onclick="openPanel('messages-panel')">💬<div class="notif-badge" style="background:var(--snap-blue)">5</div></div>
+    </div>
+  </div>
+
+  <!-- STORIES -->
+  <div class="story-section">
+    <div class="story-section-title">Stories</div>
+    <div class="story-scroll" id="story-scroll"></div>
+  </div>
+
+  <!-- FEED -->
+  <div class="feed" id="feed"></div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="bottom-nav-item active" id="nav-home" onclick="setNav('home')">
+      <div class="bottom-nav-icon">🏠</div>
+      <div class="bottom-nav-label">Home</div>
+    </div>
+    <div class="bottom-nav-item" id="nav-discover" onclick="openDiscover()">
+      <div class="bottom-nav-icon">🔍</div>
+      <div class="bottom-nav-label">Discover</div>
+    </div>
+    <div class="snap-fab" onclick="openCamera()">
+      <div class="snap-fab-btn">📸</div>
+      <div class="bottom-nav-label" style="font-size:10px;color:var(--snap-yellow);font-weight:700;">Snap</div>
+    </div>
+    <div class="bottom-nav-item" id="nav-activity" onclick="openPanel('notif-panel')">
+      <div class="bottom-nav-icon">❤️</div>
+      <div class="bottom-nav-label">Activity</div>
+    </div>
+    <div class="bottom-nav-item" id="nav-profile" onclick="openProfile('me')">
+      <div class="bottom-nav-icon">👤</div>
+      <div class="bottom-nav-label">Profile</div>
+    </div>
+  </div>
+</div>
+
+<!-- CAMERA OVERLAY -->
+<div id="camera-overlay">
+  <div class="camera-preview" id="camera-preview">
+    <div class="camera-top">
+      <span style="font-size:26px;cursor:pointer;background:rgba(0,0,0,0.5);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;" onclick="closeCamera()">✕</span>
+      <div style="display:flex;gap:10px;">
+        <span style="font-size:22px;cursor:pointer;">⚡</span>
+        <span style="font-size:22px;cursor:pointer;">✨</span>
+      </div>
+    </div>
+    <div class="camera-subject" id="camera-emoji">😎</div>
+    <div class="camera-filter-bar">
+      <div class="filter-btn active" onclick="setFilter(this,'😎')">Normal</div>
+      <div class="filter-btn" onclick="setFilter(this,'🌟')">Glow</div>
+      <div class="filter-btn" onclick="setFilter(this,'👾')">Pixel</div>
+      <div class="filter-btn" onclick="setFilter(this,'🔥')">Fire</div>
+      <div class="filter-btn" onclick="setFilter(this,'🌊')">Chill</div>
+      <div class="filter-btn" onclick="setFilter(this,'💜')">Dreamy</div>
+      <div class="filter-btn" onclick="setFilter(this,'👻')">Ghost</div>
+    </div>
+  </div>
+  <div class="camera-controls">
+    <span class="cam-side-btn" onclick="toast('Gallery coming soon!')">🖼️</span>
+    <div class="shutter-btn" onclick="takeSnap()"><div class="shutter-inner"></div></div>
+    <span class="cam-side-btn" onclick="toast('Flip camera!')">🔄</span>
+  </div>
+</div>
+
+<!-- SNAP VIEWER -->
+<div id="snap-viewer">
+  <div class="snap-view-content" id="snap-view-content">
+    <div class="snap-timer-bar" id="snap-timer-bar"></div>
+    <div class="snap-view-emoji" id="snap-view-emoji">😎</div>
+    <div class="snap-view-text" id="snap-view-text">This snap will disappear!</div>
+    <div class="snap-view-close" onclick="closeSnapViewer()">✕</div>
+  </div>
+</div>
+
+<!-- MESSAGES PANEL -->
+<div id="messages-panel" class="panel-slide">
+  <div class="panel-header">
+    <div class="back-btn" onclick="closePanel('messages-panel')">←</div>
+    <div class="panel-title">Messages</div>
+  </div>
+  <div class="msg-search">
+    <span>🔍</span>
+    <input type="text" placeholder="Search messages..." />
+  </div>
+  <div class="msg-list" id="msg-list"></div>
+</div>
+
+<!-- NOTIFICATIONS PANEL -->
+<div id="notif-panel" class="panel-slide">
+  <div class="panel-header">
+    <div class="back-btn" onclick="closePanel('notif-panel')">←</div>
+    <div class="panel-title">Activity</div>
+  </div>
+  <div class="notif-list" id="notif-list"></div>
+</div>
+
+<!-- PROFILE PANEL -->
+<div id="profile-panel" class="panel-slide">
+  <div class="profile-hero" id="profile-hero">
+    <div class="profile-back" onclick="closePanel('profile-panel')">←</div>
+    <div class="profile-avatar-big" id="profile-avatar-big">😎</div>
+    <div class="profile-name" id="profile-name">SnapUser</div>
+    <div class="profile-handle" id="profile-handle">@snapuser</div>
+    <div class="profile-bio" id="profile-bio">Living my best life 🌟 #SnapStyle</div>
+    <div class="profile-stats">
+      <div class="profile-stat"><div class="profile-stat-num" id="p-snaps">142</div><div class="profile-stat-label">Snaps</div></div>
+      <div class="profile-stat"><div class="profile-stat-num" id="p-followers">4.2K</div><div class="profile-stat-label">Followers</div></div>
+      <div class="profile-stat"><div class="profile-stat-num" id="p-following">318</div><div class="profile-stat-label">Following</div></div>
+    </div>
+  </div>
+  <div class="profile-actions" id="profile-actions"></div>
+  <div class="profile-grid" id="profile-grid"></div>
+</div>
+
+<!-- DISCOVER PANEL -->
+<div id="discover-panel" class="panel-slide">
+  <div class="discover-search-bar">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+      <div class="back-btn" onclick="closePanel('discover-panel')">←</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;">Discover 🔥</div>
+    </div>
+    <div class="discover-search">
+      <span>🔍</span>
+      <input type="text" placeholder="Search creators, snaps, tags..." />
+    </div>
+    <div class="trending-tags" id="trending-tags"></div>
+  </div>
+  <div class="discover-grid" id="discover-grid"></div>
+</div>
+
+<script>
+// ─── DATA ───
+const USERS = [
+  { id: 1, name: "Alex Rivera", handle: "@alexr", emoji: "😎", bio: "NYC street photographer 📸", snaps: 312, followers: "12.4K", following: 540 },
+  { id: 2, name: "Maya Chen", handle: "@mayac", emoji: "🌸", bio: "Fashion & lifestyle ✨", snaps: 891, followers: "89.2K", following: 312 },
+  { id: 3, name: "Jordan Cole", handle: "@jordc", emoji: "🎯", bio: "Athlete. Creator. Hustler 💪", snaps: 204, followers: "6.1K", following: 220 },
+  { id: 4, name: "Priya Nair", handle: "@priyan", emoji: "🌺", bio: "Chef & food stylist 🍜", snaps: 567, followers: "23.7K", following: 489 },
+  { id: 5, name: "Marcus Lee", handle: "@marcusl", emoji: "🎸", bio: "Music producer 🎵", snaps: 133, followers: "5.4K", following: 201 },
+  { id: 6, name: "Zoe Adams", handle: "@zoea", emoji: "🦋", bio: "Travel & adventure 🌍", snaps: 729, followers: "41.9K", following: 380 },
+];
+
+const POSTS = [
+  { user: 1, emoji: "🌆", text: "Golden hour hits different when you're on the rooftop", tag: "#GoldenHour", likes: 847, comments: 42, shares: 19, grad: "grad-1", time: "2m ago" },
+  { user: 2, emoji: "👗", text: "New fit just dropped 🔥 What do you think?", tag: "#OOTD #Fashion", likes: 3241, comments: 186, shares: 94, grad: "grad-2", time: "8m ago" },
+  { user: 3, emoji: "💪", text: "5AM club never misses. Rise & grind.", tag: "#Fitness #MorningVibes", likes: 512, comments: 28, shares: 11, grad: "grad-3", time: "23m ago" },
+  { user: 4, emoji: "🍜", text: "Homemade ramen took 6 hours. Worth every minute.", tag: "#Foodie #CookingLife", likes: 1893, comments: 97, shares: 55, grad: "grad-4", time: "1h ago" },
+  { user: 5, emoji: "🎵", text: "New beat just finished. Drop it tomorrow or keep cookin?", tag: "#Music #Producer", likes: 624, comments: 73, shares: 22, grad: "grad-5", time: "2h ago" },
+  { user: 6, emoji: "🌊", text: "Bali day 3. I never want to leave.", tag: "#Travel #Wanderlust", likes: 4120, comments: 215, shares: 138, grad: "grad-1", time: "3h ago" },
+];
+
+const MESSAGES = [
+  { user: 2, preview: "Omg your snap was 🔥🔥", unread: true, time: "2m", online: true, badge: 3 },
+  { user: 6, preview: "Are you coming to the event?", unread: true, time: "15m", online: true, badge: 1 },
+  { user: 1, preview: "Sent you a snap 📸", unread: false, time: "1h", online: false, badge: 0 },
+  { user: 3, preview: "Thanks for the shoutout!", unread: false, time: "3h", online: false, badge: 0 },
+  { user: 4, preview: "Recipe is in my bio now 🍜", unread: false, time: "5h", online: true, badge: 0 },
+  { user: 5, preview: "Check out the new track 🎵", unread: false, time: "1d", online: false, badge: 0 },
+];
+
+const NOTIFS = [
+  { user: 2, action: "liked your snap", icon: "❤️", time: "2m", unread: true },
+  { user: 6, action: "started following you", icon: "👤", time: "12m", unread: true },
+  { user: 1, action: "commented on your snap: \"This is fire! 🔥\"", icon: "💬", time: "34m", unread: true },
+  { user: 3, action: "liked your story", icon: "⭐", time: "1h", unread: false },
+  { user: 4, action: "mentioned you in a snap", icon: "📍", time: "2h", unread: false },
+  { user: 5, action: "sent you a friend request", icon: "🤝", time: "4h", unread: false },
+];
+
+const DISCOVER_CARDS = [
+  { emoji: "🌆", tag: "Trending", title: "City Vibes This Weekend", views: "2.4M views", grad: "grad-1" },
+  { emoji: "🍕", tag: "Food", title: "NYC's Best Hidden Spots", views: "891K views", grad: "grad-4" },
+  { emoji: "💃", tag: "Dance", title: "The Move Everyone's Doing", views: "14.2M views", grad: "grad-2" },
+  { emoji: "🏄", tag: "Sports", title: "Summer Sessions Are Back", views: "3.1M views", grad: "grad-3" },
+  { emoji: "🎨", tag: "Art", title: "Street Murals Going Viral", views: "567K views", grad: "grad-5" },
+  { emoji: "🚀", tag: "Tech", title: "Creator Tools That Actually Work", views: "1.9M views", grad: "grad-1" },
+];
+
+const STORY_EMOJIS = ["🌟","🔥","💫","🎯","✨","🌊","💜","🎸"];
+const TRENDING_TAGS = ["#ForYou","#Trending","#SnapStyle","#Viral","#OOTD","#Food","#Travel","#Music","#Art","#Sports"];
+
+// ─── STATE ───
+let currentUser = null;
+let likedPosts = new Set();
+
+// ─── INIT ───
+setTimeout(() => {
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('auth-screen').classList.add('active');
+}, 2700);
+
+// ─── AUTH ───
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => {
+    t.classList.toggle('active', (i===0 && tab==='login') || (i===1 && tab==='signup'));
+  });
+  const form = document.getElementById('auth-form');
+  if (tab === 'signup') {
+    form.innerHTML = `
+      <input class="auth-input" type="text" placeholder="Full Name" />
+      <input class="auth-input" type="text" id="auth-username" placeholder="Username" />
+      <input class="auth-input" type="email" placeholder="Email" />
+      <input class="auth-input" type="password" placeholder="Password" />
+      <button class="btn-primary" onclick="enterApp()">Create Account 🚀</button>
+    `;
+  } else {
+    form.innerHTML = `
+      <input class="auth-input" type="text" id="auth-username" placeholder="Username" />
+      <input class="auth-input" type="password" placeholder="Password" />
+      <button class="btn-primary" onclick="enterApp()">Log In ⚡</button>
+    `;
+  }
+}
+
+function enterApp() {
+  const usernameEl = document.getElementById('auth-username');
+  const username = usernameEl ? usernameEl.value.trim() || 'SnapUser' : 'SnapUser';
+  currentUser = { name: username, handle: '@' + username.toLowerCase().replace(/\s/g,''), emoji: '😎' };
+  document.getElementById('auth-screen').classList.remove('active');
+  document.getElementById('app').classList.add('active');
+  buildApp();
+}
+
+// ─── BUILD APP ───
+function buildApp() {
+  buildStories();
+  buildFeed();
+  buildMessages();
+  buildNotifications();
+  buildDiscover();
+}
+
+function buildStories() {
+  const scroll = document.getElementById('story-scroll');
+  scroll.innerHTML = `
+    <div class="story-item add-story" onclick="openCamera()">
+      <div class="story-ring"><div class="story-avatar" style="font-size:28px;">➕</div></div>
+      <div class="story-name">Your Story</div>
+    </div>
+  `;
+  USERS.forEach((u, i) => {
+    const seen = i > 3;
+    const div = document.createElement('div');
+    div.className = 'story-item';
+    div.onclick = () => viewStory(u);
+    div.innerHTML = `
+      <div class="story-ring ${seen ? 'seen' : ''}">
+        <div class="story-avatar">${u.emoji}</div>
+      </div>
+      <div class="story-name">${u.name.split(' ')[0]}</div>
+    `;
+    scroll.appendChild(div);
+  });
+}
+
+function buildFeed() {
+  const feed = document.getElementById('feed');
+  feed.innerHTML = '';
+  POSTS.forEach((post, idx) => {
+    const user = USERS.find(u => u.id === post.user);
+    const card = document.createElement('div');
+    card.className = 'snap-card';
+    card.style.animationDelay = `${idx * 0.06}s`;
+    const liked = likedPosts.has(idx);
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-avatar" onclick="openProfile(${user.id})" style="cursor:pointer">${user.emoji}</div>
+        <div class="card-user">
+          <div class="card-username" onclick="openProfile(${user.id})" style="cursor:pointer">${user.name}</div>
+          <div class="card-time">${post.time}</div>
+        </div>
+        <div class="card-menu" onclick="toast('Options coming soon!')">⋯</div>
+      </div>
+      <div class="card-snap ${post.grad}" onclick="viewSnap(${idx})">
+        <div class="card-snap-emoji">${post.emoji}</div>
+        <div class="card-snap-overlay">
+          <div class="card-snap-text">${post.text.split(' ').slice(0,4).join(' ')}<span>...</span></div>
+        </div>
+        <div class="snap-timer">⏱ 10s</div>
+      </div>
+      <div class="card-actions">
+        <button class="card-action-btn ${liked ? 'liked' : ''}" id="like-btn-${idx}" onclick="toggleLike(${idx}, event)">
+          <span class="icon">${liked ? '❤️' : '🤍'}</span>
+          <span class="action-count" id="like-count-${idx}">${(post.likes + (liked?1:0)).toLocaleString()}</span>
+        </button>
+        <button class="card-action-btn" onclick="toast('Comments coming soon!')">
+          <span class="icon">💬</span>
+          <span class="action-count">${post.comments}</span>
+        </button>
+        <button class="card-action-btn card-share" onclick="toast('Snap shared! 🚀')">
+          <span class="icon">📤</span>
+        </button>
+      </div>
+      <div class="card-caption"><strong>${user.name}</strong> ${post.text} <span class="hashtag">${post.tag}</span></div>
+    `;
+    feed.appendChild(card);
+  });
+}
+
+function buildMessages() {
+  const list = document.getElementById('msg-list');
+  list.innerHTML = '';
+  MESSAGES.forEach(msg => {
+    const user = USERS.find(u => u.id === msg.user);
+    const item = document.createElement('div');
+    item.className = 'msg-item';
+    item.onclick = () => { closePanel('messages-panel'); toast(`Opening chat with ${user.name}...`); };
+    item.innerHTML = `
+      <div class="msg-avatar" style="background:var(--snap-card)">
+        ${user.emoji}
+        ${msg.online ? '<div class="msg-online"></div>' : ''}
+      </div>
+      <div class="msg-info">
+        <div class="msg-name">${user.name}</div>
+        <div class="msg-preview ${msg.unread ? 'unread' : ''}">${msg.preview}</div>
+      </div>
+      <div class="msg-meta">
+        <div class="msg-time">${msg.time}</div>
+        ${msg.badge > 0 ? `<div class="msg-badge">${msg.badge}</div>` : ''}
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function buildNotifications() {
+  const list = document.getElementById('notif-list');
+  list.innerHTML = '';
+  NOTIFS.forEach(notif => {
+    const user = USERS.find(u => u.id === notif.user);
+    const item = document.createElement('div');
+    item.className = `notif-item ${notif.unread ? 'unread' : ''}`;
+    item.onclick = () => toast(`Viewing ${user.name}'s profile...`);
+    item.innerHTML = `
+      <div class="notif-item-avatar" style="background:var(--snap-card)">${user.emoji}</div>
+      <div class="notif-item-text"><strong>${user.name}</strong> <span>${notif.action}</span> · <span>${notif.time}</span></div>
+      <div class="notif-item-action">${notif.icon}</div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function buildDiscover() {
+  // Tags
+  const tagsEl = document.getElementById('trending-tags');
+  TRENDING_TAGS.forEach((tag, i) => {
+    const chip = document.createElement('div');
+    chip.className = `tag-chip ${i === 0 ? 'active' : ''}`;
+    chip.textContent = tag;
+    chip.onclick = () => {
+      document.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      toast(`Showing ${tag}`);
+    };
+    tagsEl.appendChild(chip);
+  });
+
+  // Grid
+  const grid = document.getElementById('discover-grid');
+  DISCOVER_CARDS.forEach(card => {
+    const item = document.createElement('div');
+    item.className = `discover-card`;
+    item.onclick = () => toast(`Opening: ${card.title}`);
+    item.innerHTML = `
+      <div class="discover-card-bg ${card.grad}">
+        <div class="discover-card-emoji">${card.emoji}</div>
+      </div>
+      <div class="discover-card-overlay"></div>
+      <div class="discover-card-info">
+        <div class="discover-card-tag">${card.tag}</div>
+        <div class="discover-card-title">${card.title}</div>
+        <div class="discover-card-views">${card.views}</div>
+      </div>
+    `;
+    grid.appendChild(item);
+  });
+}
+
+// ─── INTERACTIONS ───
+function toggleLike(idx, e) {
+  if (likedPosts.has(idx)) {
+    likedPosts.delete(idx);
+  } else {
+    likedPosts.add(idx);
+    // heart burst
+    const burst = document.createElement('div');
+    burst.className = 'heart-burst';
+    burst.textContent = '❤️';
+    burst.style.left = (e.clientX - 12) + 'px';
+    burst.style.top = (e.clientY - 12) + 'px';
+    document.body.appendChild(burst);
+    setTimeout(() => burst.remove(), 1000);
+  }
+  buildFeed();
+}
+
+function viewStory(user) {
+  document.getElementById('snap-view-emoji').textContent = user.emoji;
+  document.getElementById('snap-view-text').textContent = `${user.name}'s story ✨`;
+  // reset timer bar
+  const bar = document.getElementById('snap-timer-bar');
+  bar.style.animation = 'none';
+  bar.getBoundingClientRect();
+  bar.style.animation = 'timerBar 5s linear forwards';
+  document.getElementById('snap-viewer').classList.add('active');
+  setTimeout(closeSnapViewer, 5100);
+}
+
+function viewSnap(idx) {
+  const post = POSTS[idx];
+  document.getElementById('snap-view-emoji').textContent = post.emoji;
+  document.getElementById('snap-view-text').textContent = post.text;
+  const bar = document.getElementById('snap-timer-bar');
+  bar.style.animation = 'none';
+  bar.getBoundingClientRect();
+  bar.style.animation = 'timerBar 5s linear forwards';
+  document.getElementById('snap-viewer').classList.add('active');
+  setTimeout(closeSnapViewer, 5100);
+}
+
+function closeSnapViewer() {
+  document.getElementById('snap-viewer').classList.remove('active');
+}
+
+// ─── CAMERA ───
+function openCamera() {
+  document.getElementById('camera-overlay').classList.add('active');
+}
+function closeCamera() {
+  document.getElementById('camera-overlay').classList.remove('active');
+}
+function setFilter(el, emoji) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('camera-emoji').textContent = emoji;
+}
+function takeSnap() {
+  const emoji = document.getElementById('camera-emoji').textContent;
+  closeCamera();
+  // Add to feed as new post
+  const newPost = { user: 1, emoji, text: "Fresh snap just dropped! 📸", tag: "#SnapStyle", likes: 0, comments: 0, shares: 0, grad: "grad-" + (Math.floor(Math.random()*5)+1), time: "just now" };
+  POSTS.unshift(newPost);
+  buildFeed();
+  toast('Snap posted! 🔥');
+}
+
+// ─── PROFILE ───
+function openProfile(userId) {
+  let user;
+  if (userId === 'me') {
+    user = { id: 0, name: currentUser?.name || 'SnapUser', handle: currentUser?.handle || '@snapuser', emoji: '😎', bio: 'Living my best life 🌟 #SnapStyle', snaps: 12, followers: '142', following: 87 };
+  } else {
+    user = USERS.find(u => u.id === userId);
+  }
+  if (!user) return;
+
+  document.getElementById('profile-avatar-big').textContent = user.emoji;
+  document.getElementById('profile-name').textContent = user.name;
+  document.getElementById('profile-handle').textContent = user.handle;
+  document.getElementById('profile-bio').textContent = user.bio;
+  document.getElementById('p-snaps').textContent = user.snaps;
+  document.getElementById('p-followers').textContent = user.followers;
+  document.getElementById('p-following').textContent = user.following;
+
+  const actions = document.getElementById('profile-actions');
+  if (userId === 'me') {
+    actions.innerHTML = `<button class="btn-follow" onclick="toast('Edit profile coming soon!')">Edit Profile</button>`;
+  } else {
+    actions.innerHTML = `
+      <button class="btn-follow" onclick="followUser(this,'${user.name}')">Follow</button>
+      <button class="btn-message" onclick="closePanel('profile-panel');openPanel('messages-panel');toast('Opening chat...')">Message</button>
+    `;
+  }
+
+  const grid = document.getElementById('profile-grid');
+  const emojis = ["🌆","🎵","🍜","💪","🌊","✨","🔥","🌸","🎯","🌟","👗","🎸","🏄","🎨","🦋","🚀","💫","🎪"];
+  grid.innerHTML = '';
+  emojis.slice(0, 12).forEach((e, i) => {
+    const item = document.createElement('div');
+    item.className = 'profile-grid-item';
+    const grad = "grad-" + ((i%5)+1);
+    item.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;" class="${grad}">${e}</div>`;
+    item.onclick = () => toast('Opening snap...');
+    grid.appendChild(item);
+  });
+
+  openPanel('profile-panel');
+}
+
+function followUser(btn, name) {
+  if (btn.textContent === 'Follow') {
+    btn.textContent = 'Following ✓';
+    btn.style.background = 'var(--snap-card)';
+    btn.style.color = 'var(--snap-text)';
+    btn.style.border = '1px solid var(--snap-yellow)';
+    toast(`Following ${name}! 🎉`);
+  } else {
+    btn.textContent = 'Follow';
+    btn.style.background = 'var(--snap-yellow)';
+    btn.style.color = 'var(--snap-black)';
+    btn.style.border = 'none';
+    toast(`Unfollowed ${name}`);
+  }
+}
+
+// ─── PANELS ───
+function openPanel(id) {
+  document.getElementById(id).classList.add('active');
+}
+function closePanel(id) {
+  document.getElementById(id).classList.remove('active');
+}
+function openDiscover() {
+  openPanel('discover-panel');
+}
+
+function setNav(tab) {
+  document.querySelectorAll('.bottom-nav-item').forEach(item => item.classList.remove('active'));
+  document.getElementById('nav-' + tab)?.classList.add('active');
+}
+
+// ─── TOAST ───
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
